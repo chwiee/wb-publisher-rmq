@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wb-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wb-app
+  template:
+    metadata:
+      labels:
+        app: wb-app
+    spec:
+      containers:
+        - name: wb-container
+          image: wb-image:latest
+          env:
+            - name: RABBITMQ_PASSWORD
+              value: ""
+            - name: RABBITMQ_USER
+              value: ""
+            - name: RABBITMQ_HOST
+              value: ""
+            - name: RABBITMQ_PORT
+              value: ""
