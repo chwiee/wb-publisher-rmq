@@ -1,22 +1,34 @@
-import os
 import pika
+import logging
 
-rabbitmq_user = os.getenv('RABBITMQ_USER')
-rabbitmq_password = os.getenv('RABBITMQ_PASSWORD')
-rabbitmq_host = os.getenv('RABBITMQ_HOST')
-rabbitmq_port = os.getenv('RABBITMQ_PORT')
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-url = f'amqp://{rabbitmq_user}:{rabbitmq_password}@{rabbitmq_host}:{rabbitmq_port}/'
-params = pika.URLParameters(url)
+try:
+    credentials = pika.PlainCredentials('your_username', 'your_password')
+    connection_params = pika.ConnectionParameters('localhost', 5672, '/', credentials)
 
-connection = pika.BlockingConnection(params)
-channel = connection.channel()
+    connection = pika.BlockingConnection(connection_params)
+    channel = connection.channel()
 
-channel.queue_declare(queue='queue1')
+    queue_name = 'my_queue'
+    channel.queue_declare(queue=queue_name, durable=True)
 
-channel.basic_publish(exchange='',
-                      routing_key='queue1',
-                      body='Olá, mundo!')
+    message = 'Hello, this is a test message!'
 
-print(" [x] Enviada 'Olá, mundo!'")
-connection.close()
+    channel.basic_publish(exchange='',
+                          routing_key=queue_name,
+                          body=message,
+                          properties=pika.BasicProperties(
+                              delivery_mode=2,
+                          ))
+
+    logger.info(f"Sent '{message}' to queue '{queue_name}'")
+
+    connection.close()
+except pika.exceptions.AMQPConnectionError as e:
+    logger.error(f"Connection error: {e}")
+except pika.exceptions.ChannelError as e:
+    logger.error(f"Channel error: {e}")
+except Exception as e:
+    logger.error(f"An unexpected error occurred: {e}")
